@@ -4,6 +4,7 @@ const STATES = ["up", "flapping", "down", "unknown"];
 const STATE_LABELS = { up: "Up", flapping: "Flapping", down: "Down", unknown: "No data" };
 const MIN_SCALE = 0.3;
 const MAX_SCALE = 1;
+const TICKER_SPEED = 20; // pixels per second
 
 let refreshSeconds = 15;
 let timer = null;
@@ -82,6 +83,103 @@ function fitToScreen() {
   root.setProperty("--scale", lo);
 }
 
+function formatDuration(ms) {
+  const s = Math.max(0, Math.round(ms / 1000));
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ${m % 60}m`;
+  return `${Math.floor(h / 24)}d ${h % 24}h`;
+}
+
+function formatTime(iso) {
+  const d = new Date(iso);
+  const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  if (d.toDateString() === new Date().toDateString()) return time;
+  return `${d.toLocaleDateString([], { month: "short", day: "numeric" })} ${time}`;
+}
+
+function failureRow(f) {
+  const ongoing = !f.resolved;
+  const row = el("a", `failure ${ongoing ? "ongoing" : "resolved"}`);
+  row.href = `/endpoints/${encodeURI(f.key)}`;
+  row.title = `${f.name}\n${f.reason}`;
+
+  const end = ongoing ? Date.now() : new Date(f.resolved).getTime();
+  const span = formatDuration(end - new Date(f.start).getTime());
+  const checks = `${f.count} failed check${f.count === 1 ? "" : "s"}`;
+  const duration = ongoing ? `down ${span}, ${checks}` : `down ${span}, ${checks}, resolved ${formatTime(f.resolved)}`;
+
+  row.append(
+    el("span", "badge", ongoing ? "Down" : "Resolved"),
+    el("span", "time", formatTime(f.start)),
+    el("span", "failure-group", f.group || "Ungrouped"),
+    el("span", "label", f.label),
+    el("span", "duration", duration)
+  );
+  if (f.reason) row.lastChild.append(el("span", "reason", ` · ${f.reason}`));
+  return row;
+}
+
+// Ticker scrolls the failure list upward in a seamless loop when it overflows.
+const ticker = {
+  node: null,
+  track: null,
+  failures: [],
+  offset: 0,
+  loopHeight: 0,
+  paused: false,
+  last: 0,
+};
+
+function renderFailures(failures) {
+  ticker.failures = failures;
+  const ongoing = failures.filter((f) => !f.resolved).length;
+  document.getElementById("failure-count").textContent = failures.length
+    ? `${ongoing} ongoing, ${failures.length - ongoing} resolved (24h)`
+    : "";
+  layoutTicker();
+}
+
+function layoutTicker() {
+  const track = el("div", "ticker-track");
+  ticker.node.replaceChildren(track);
+  ticker.track = track;
+  ticker.loopHeight = 0;
+
+  if (!ticker.failures.length) {
+    track.append(el("div", "ticker-empty", "No failures in the last 24 hours."));
+    return;
+  }
+
+  const copy = el("div");
+  copy.append(...ticker.failures.map(failureRow));
+  track.append(copy);
+  if (copy.offsetHeight <= ticker.node.clientHeight) return;
+
+  // Duplicate the list so scrolling past the end wraps without a jump.
+  const gap = el("div", "ticker-gap");
+  track.append(gap, copy.cloneNode(true));
+  ticker.loopHeight = copy.offsetHeight + gap.offsetHeight;
+  ticker.offset %= ticker.loopHeight;
+  moveTicker();
+}
+
+function moveTicker() {
+  ticker.track.style.transform = `translateY(${-ticker.offset}px)`;
+}
+
+function tickerFrame(ts) {
+  const dt = ticker.last ? (ts - ticker.last) / 1000 : 0;
+  ticker.last = ts;
+  if (ticker.loopHeight && !ticker.paused) {
+    ticker.offset = (ticker.offset + TICKER_SPEED * dt) % ticker.loopHeight;
+    moveTicker();
+  }
+  requestAnimationFrame(tickerFrame);
+}
+
 async function refresh() {
   try {
     const resp = await fetch("/dash/api/summary", { cache: "no-store" });
@@ -95,10 +193,12 @@ async function refresh() {
     document.getElementById("version").textContent = `custom-gatus-dashboard v${data.version}`;
     document.getElementById("updated").textContent =
       `Updated ${new Date(data.updated).toLocaleTimeString()}`;
-    document.getElementById("stale").hidden = true;
+    document.getElementById("stale").hidden = !data.stale;
 
     renderCounts(data.groups);
     renderGroups(data.groups);
+    fitToScreen();
+    renderFailures(data.failures || []);
 
     if (data.refreshSeconds && data.refreshSeconds !== refreshSeconds) {
       refreshSeconds = data.refreshSeconds;
@@ -108,7 +208,6 @@ async function refresh() {
     console.error("refresh failed", err);
     document.getElementById("stale").hidden = false;
   }
-  fitToScreen();
 }
 
 function schedule() {
@@ -119,8 +218,16 @@ function schedule() {
 let resizeTimer = null;
 window.addEventListener("resize", () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(fitToScreen, 100);
+  resizeTimer = setTimeout(() => {
+    fitToScreen();
+    layoutTicker();
+  }, 100);
 });
+
+ticker.node = document.getElementById("ticker");
+ticker.node.addEventListener("mouseenter", () => (ticker.paused = true));
+ticker.node.addEventListener("mouseleave", () => (ticker.paused = false));
+requestAnimationFrame(tickerFrame);
 
 refresh();
 schedule();

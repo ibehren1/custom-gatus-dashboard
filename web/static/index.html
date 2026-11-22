@@ -15,9 +15,13 @@
   </header>
   <div id="stale" class="stale" hidden>Unable to reach Gatus. Showing last known data.</div>
   <main id="groups"></main>
-  <footer>
-    <span id="version"></span>
-  </footer>
+  <section class="failures">
+    <h2>
+      Recent failures <span id="failure-count" class="failure-count"></span>
+      <span id="version" class="version"></span>
+    </h2>
+    <div id="ticker" class="ticker"></div>
+  </section>
   <script src="/dash/static/app.js"></script>
 </body>
 </html>

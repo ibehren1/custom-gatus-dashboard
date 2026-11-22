@@ -24,13 +24,24 @@ last response time, last check time, recent history, and errors.
 Pill labels use the part of the endpoint name before the first ` - `
 (for example `Proxmox pve04 - tcp://pve04.iac.lan:22` shows as `Proxmox pve04`).
 
+## Recent failures
+
+A panel across the bottom lists failure incidents from the last 24 hours. Consecutive
+failed checks for an endpoint are grouped into one incident showing when it started,
+how long it lasted, how many checks failed, and why (errors or failed conditions).
+Ongoing incidents are listed first, then resolved ones, most recent first. When the
+list is taller than the panel it scrolls upward continuously; hover to pause.
+
+The dashboard polls Gatus in the background and keeps the incident log in memory.
+On startup it backfills from the last 100 results Gatus has for each endpoint.
+
 ## Routes
 
 | Path                 | Served by                                    |
 |----------------------|----------------------------------------------|
 | `/`                  | Dashboard                                    |
 | `/dash/static/*`     | Dashboard assets                             |
-| `/dash/api/summary`  | Dashboard JSON (grouped, classified pills)   |
+| `/dash/api/summary`  | Dashboard JSON (pills and failure incidents) |
 | `/dash/healthz`      | Health check                                 |
 | everything else      | Reverse-proxied to Gatus (detail pages, API) |
 
@@ -41,7 +52,9 @@ Pill labels use the part of the endpoint name before the first ` - `
 | `GATUS_URL`       | `http://gatus:8080` | Internal URL of the Gatus container                 |
 | `LISTEN_ADDR`     | `:8080`             | Address the dashboard listens on                    |
 | `REFRESH_SECONDS` | `15`                | Browser refresh interval                            |
+| `POLL_SECONDS`    | `10`                | How often the dashboard polls Gatus                 |
 | `HISTORY_SIZE`    | `10`                | Number of recent results used for flap detection    |
+| `FAILURE_LOG_SIZE`| `100`               | Maximum resolved incidents kept in the failure log  |
 | `TITLE`           | Gatus `ui.title`    | Page title; defaults to the title configured in Gatus |
 
 ## Deploy

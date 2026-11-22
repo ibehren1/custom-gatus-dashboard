@@ -28,6 +28,9 @@ body {
 }
 
 body {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   padding: calc(var(--scale) * 0.75rem);
 }
 
@@ -76,6 +79,7 @@ h1 {
 }
 
 main {
+  flex: none;
   column-width: calc(var(--scale) * 16rem);
   column-gap: calc(var(--scale) * 0.6rem);
 }
@@ -158,9 +162,110 @@ main {
   color: var(--unknown-text);
 }
 
-footer {
-  margin-top: calc(var(--scale) * 0.25rem);
+.failures {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 8rem;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--card);
+}
+
+.failures h2 {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  margin: 0;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--card-border);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.failure-count,
+.version {
   color: var(--muted);
-  font-size: calc(var(--scale) * 0.7rem);
-  text-align: right;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.version {
+  margin-left: auto;
+}
+
+.ticker {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 0.6rem;
+}
+
+.failure {
+  display: grid;
+  grid-template-columns: 4.5rem 9.5rem 10rem 13rem 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid #1f232b;
+  color: var(--text);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.failure:hover {
+  background: #20242d;
+}
+
+.failure > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.failure .badge {
+  justify-self: start;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.failure.ongoing .badge {
+  background: var(--down);
+  color: var(--down-text);
+}
+
+.failure.resolved {
+  color: var(--muted);
+}
+
+.failure.resolved .badge {
+  background: var(--up);
+  color: var(--up-text);
+}
+
+.failure .time,
+.failure .duration {
+  font-variant-numeric: tabular-nums;
+}
+
+.failure .reason {
+  color: var(--muted);
+}
+
+.ticker-track {
+  will-change: transform;
+}
+
+.ticker-gap {
+  height: 1.5rem;
+}
+
+.ticker-empty {
+  padding: 0.5rem 0;
+  color: var(--muted);
+  font-size: 0.8rem;
 }
