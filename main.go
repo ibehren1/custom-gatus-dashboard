@@ -27,7 +27,9 @@ type config struct {
 	gatusURL       string
 	listenAddr     string
 	refreshSeconds int
+	pollSeconds    int
 	historySize    int
+	failureLogSize int
 	title          string
 }
 
@@ -36,7 +38,9 @@ func loadConfig() config {
 		gatusURL:       envString("GATUS_URL", "http://gatus:8080"),
 		listenAddr:     envString("LISTEN_ADDR", ":8080"),
 		refreshSeconds: envInt("REFRESH_SECONDS", 15),
+		pollSeconds:    envInt("POLL_SECONDS", 10),
 		historySize:    envInt("HISTORY_SIZE", 10),
+		failureLogSize: envInt("FAILURE_LOG_SIZE", 100),
 		title:          os.Getenv("TITLE"),
 	}
 }
@@ -69,7 +73,13 @@ func main() {
 		log.Fatalf("invalid GATUS_URL %q", cfg.gatusURL)
 	}
 
-	client := gatus.NewClient(cfg.gatusURL, cfg.historySize, 5*time.Second)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	client := gatus.NewClient(cfg.gatusURL)
+	failures := gatus.NewFailureLog(cfg.failureLogSize, 24*time.Hour)
+	poller := gatus.NewPoller(client, time.Duration(cfg.pollSeconds)*time.Second, cfg.historySize, failures)
+	go poller.Run(ctx)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
@@ -79,7 +89,7 @@ func main() {
 	mux.HandleFunc("GET /dash/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ok"))
 	})
-	mux.HandleFunc("GET /dash/api/summary", summaryHandler(cfg, client))
+	mux.HandleFunc("GET /dash/api/summary", summaryHandler(cfg, client, poller))
 	mux.Handle("/", &httputil.ReverseProxy{
 		Rewrite: func(r *httputil.ProxyRequest) {
 			r.SetURL(upstream)
@@ -100,8 +110,6 @@ func main() {
 		}
 	}()
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 	<-ctx.Done()
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -111,12 +119,11 @@ func main() {
 	}
 }
 
-func summaryHandler(cfg config, client *gatus.Client) http.HandlerFunc {
+func summaryHandler(cfg config, client *gatus.Client, poller *gatus.Poller) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		statuses, fetchedAt, err := client.Statuses(r.Context())
-		if err != nil {
-			log.Printf("fetch statuses: %v", err)
-			http.Error(w, "failed to reach gatus", http.StatusBadGateway)
+		groups, failures, fetchedAt, stale, ok := poller.Snapshot()
+		if !ok {
+			http.Error(w, "no data from gatus yet", http.StatusBadGateway)
 			return
 		}
 
@@ -132,7 +139,9 @@ func summaryHandler(cfg config, client *gatus.Client) http.HandlerFunc {
 			Version:        version,
 			RefreshSeconds: cfg.refreshSeconds,
 			Updated:        fetchedAt,
-			Groups:         gatus.BuildGroups(statuses),
+			Stale:          stale,
+			Groups:         groups,
+			Failures:       failures,
 		})
 	}
 }

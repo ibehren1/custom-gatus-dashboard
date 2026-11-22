@@ -49,8 +49,8 @@ func TestBuildGroups(t *testing.T) {
 		{Name: "b", Group: "Web", Key: "web_b", Results: results(true)},
 		{Name: "a", Group: "Web", Key: "web_a", Results: results(false)},
 		{Name: "x", Key: "_x"},
-		{Name: "dns", Group: "DNS", Key: "dns_dns", Results: results(true)},
-	})
+		{Name: "dns", Group: "DNS", Key: "dns_dns", Results: results(false, false, true)},
+	}, 2)
 	wantOrder := []string{"DNS", ungroupedName, "Web"}
 	if len(groups) != len(wantOrder) {
 		t.Fatalf("got %d groups, want %d", len(groups), len(wantOrder))
@@ -59,6 +59,9 @@ func TestBuildGroups(t *testing.T) {
 		if groups[i].Name != name {
 			t.Errorf("group %d = %q, want %q", i, groups[i].Name, name)
 		}
+	}
+	if dns := groups[0].Endpoints[0]; dns.State != StateFlapping || len(dns.Recent) != 2 {
+		t.Errorf("history not trimmed to 2: %+v", dns)
 	}
 	web := groups[2].Endpoints
 	if web[0].Key != "web_a" || web[0].State != StateDown || web[1].State != StateUp {
