@@ -1,17 +1,17 @@
 :root {
   --scale: 1;
-  --bg: #2a2c30;
-  --card: #33363b;
-  --card-border: #44474d;
+  --bg: #15171a;
+  --card: #1b1e22;
+  --card-border: #2a2e34;
   --text: #e6e8eb;
-  --muted: #a3a8b0;
+  --muted: #8d94a0;
   --up: #0b6e2e;
   --up-text: #ecfdf0;
   --flapping: #e6c200;
   --flapping-text: #1a1600;
   --down: #a10f0f;
   --down-text: #fff0f0;
-  --unknown: #565c66;
+  --unknown: #434852;
   --unknown-text: #e6e8eb;
 }
 
@@ -229,7 +229,7 @@ main {
   gap: 0.75rem;
   align-items: center;
   padding: 0.2rem 0;
-  border-bottom: 1px solid #3d4046;
+  border-bottom: 1px solid #23272c;
   color: var(--text);
   font-size: 0.78rem;
   line-height: 1.4;
@@ -238,7 +238,7 @@ main {
 }
 
 .failure:hover {
-  background: #3b3e44;
+  background: #22262b;
 }
 
 .failure > span {
