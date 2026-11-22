@@ -86,7 +86,7 @@ h1 {
 
 .refresh-progress {
   height: 100%;
-  background: #3b82f6;
+  background: linear-gradient(90deg, #8e9196, #c0c0c0 60%, #e8e8e8);
   transform-origin: left;
   transform: scaleX(0);
 }

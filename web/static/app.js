@@ -190,10 +190,10 @@ function tickerFrame(ts) {
   requestAnimationFrame(tickerFrame);
 }
 
-// Drain the refresh bar and count down the seconds until the next refresh.
+// Fill the refresh bar and count down the seconds until the next refresh.
 function updateCountdown() {
   const remaining = Math.max(0, nextRefreshAt - Date.now());
-  const fraction = nextRefreshAt ? remaining / (refreshSeconds * 1000) : 0;
+  const fraction = nextRefreshAt ? 1 - remaining / (refreshSeconds * 1000) : 1;
   document.getElementById("refresh-progress").style.transform = `scaleX(${fraction})`;
 
   const seconds = Math.ceil(remaining / 1000);
