@@ -1,9 +1,18 @@
+[![GitHub Release](https://img.shields.io/github/v/release/ibehren1/custom-gatus-dashboard)](https://github.com/ibehren1/custom-gatus-dashboard/releases/latest)
+[![Build image](https://github.com/ibehren1/custom-gatus-dashboard/actions/workflows/image.yml/badge.svg)](https://github.com/ibehren1/custom-gatus-dashboard/actions/workflows/image.yml)
+[![License: MIT](https://img.shields.io/github/license/ibehren1/custom-gatus-dashboard)](LICENSE)
+[![Go version](https://img.shields.io/github/go-mod/go-version/ibehren1/custom-gatus-dashboard)](go.mod)
+
 # custom-gatus-dashboard
 
 A compact, wall-display style dashboard for [Gatus](https://github.com/TwiN/gatus).
 Every endpoint is a small color-coded pill, grouped by Gatus group, and the page
 automatically scales so everything fits on one screen without scrolling.
 Clicking a pill opens the standard Gatus endpoint detail page.
+
+![Dashboard showing pills grouped by Gatus group and the recent failures panel](docs/screenshot.png)
+
+<sub>Screenshot uses demo data.</sub>
 
 It runs as a sidecar container next to Gatus. It reads data from the Gatus REST API
 (no database access) and reverse-proxies the rest of the Gatus UI, so the dashboard
@@ -95,12 +104,6 @@ See [`docker-compose.example.yml`](docker-compose.example.yml). Minimal sidecar 
 go test ./...
 docker build -t custom-gatus-dashboard .
 ```
-
-## Versioning
-
-The version lives in [`VERSION`](VERSION) and is baked into the binary at build time
-(shown in the dashboard footer). It starts at `0.0.0`. Every commit increments the
-patch number (`z` in `x.y.z`); only the maintainer changes `x.y`.
 
 ## Releases
 
