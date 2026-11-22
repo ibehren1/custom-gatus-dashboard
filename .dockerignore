@@ -4,3 +4,4 @@ config/
 data/
 docker-compose*.yml
 bin/
+docs/

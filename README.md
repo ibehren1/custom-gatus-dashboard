@@ -5,6 +5,10 @@ Every endpoint is a small color-coded pill, grouped by Gatus group, and the page
 automatically scales so everything fits on one screen without scrolling.
 Clicking a pill opens the standard Gatus endpoint detail page.
 
+![Dashboard showing pills grouped by Gatus group and the recent failures panel](docs/screenshot.png)
+
+<sub>Screenshot uses demo data.</sub>
+
 It runs as a sidecar container next to Gatus. It reads data from the Gatus REST API
 (no database access) and reverse-proxies the rest of the Gatus UI, so the dashboard
 and the Gatus detail pages share one origin.
