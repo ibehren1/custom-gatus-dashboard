@@ -29,7 +29,9 @@ services:
       - gatus-network
 
   dashboard:
+    # :latest tracks main; pin a release tag (for example :0.0.10) for fixed versions.
     image: ghcr.io/ibehren1/custom-gatus-dashboard:latest
+    pull_policy: always
     restart: unless-stopped
     depends_on:
       - gatus

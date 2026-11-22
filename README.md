@@ -79,6 +79,7 @@ See [`docker-compose.example.yml`](docker-compose.example.yml). Minimal sidecar 
 ```yaml
   dashboard:
     image: ghcr.io/ibehren1/custom-gatus-dashboard:latest
+    pull_policy: always
     environment:
       - GATUS_URL=http://gatus:8080
     ports:
@@ -101,8 +102,12 @@ The version lives in [`VERSION`](VERSION) and is baked into the binary at build 
 (shown in the dashboard footer). It starts at `0.0.0`. Every commit increments the
 patch number (`z` in `x.y.z`); only the maintainer changes `x.y`.
 
-CI publishes `ghcr.io/ibehren1/custom-gatus-dashboard` as `:latest` and `:<VERSION>`
-on pushes to `main`, and `:<x.y.z>` for `vX.Y.Z` tags.
+## Releases
+
+Every push to `main` runs tests, builds a multi-arch (amd64, arm64) image, and
+publishes `ghcr.io/ibehren1/custom-gatus-dashboard` as `:latest` and `:<VERSION>`.
+If no release exists yet for that version, CI also creates a GitHub release
+`v<VERSION>` with generated notes. Pull requests only build and test.
 
 ## License
 
