@@ -1,3 +1,8 @@
+[![GitHub Release](https://img.shields.io/github/v/release/ibehren1/custom-gatus-dashboard)](https://github.com/ibehren1/custom-gatus-dashboard/releases/latest)
+[![Build image](https://github.com/ibehren1/custom-gatus-dashboard/actions/workflows/image.yml/badge.svg)](https://github.com/ibehren1/custom-gatus-dashboard/actions/workflows/image.yml)
+[![License: MIT](https://img.shields.io/github/license/ibehren1/custom-gatus-dashboard)](LICENSE)
+[![Go version](https://img.shields.io/github/go-mod/go-version/ibehren1/custom-gatus-dashboard)](go.mod)
+
 # custom-gatus-dashboard
 
 A compact, wall-display style dashboard for [Gatus](https://github.com/TwiN/gatus).
