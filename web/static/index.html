@@ -11,13 +11,18 @@
   <header>
     <h1 id="title">Status</h1>
     <div id="counts" class="counts"></div>
-    <div id="updated" class="updated"></div>
+    <div class="updated"><span id="updated"></span> · <span id="countdown"></span></div>
   </header>
+  <div class="refresh-bar"><div id="refresh-progress" class="refresh-progress"></div></div>
   <div id="stale" class="stale" hidden>Unable to reach Gatus. Showing last known data.</div>
   <main id="groups"></main>
-  <footer>
-    <span id="version"></span>
-  </footer>
+  <section class="failures">
+    <h2>
+      Recent failures <span id="failure-count" class="failure-count"></span>
+      <span id="version" class="version"></span>
+    </h2>
+    <div id="ticker" class="ticker"></div>
+  </section>
   <script src="/dash/static/app.js"></script>
 </body>
 </html>

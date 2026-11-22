@@ -27,20 +27,30 @@ type EndpointStatus struct {
 
 // Result mirrors a single check result. Gatus returns results oldest first.
 type Result struct {
-	Hostname  string        `json:"hostname"`
-	Duration  time.Duration `json:"duration"`
-	Errors    []string      `json:"errors"`
-	Success   bool          `json:"success"`
-	Timestamp time.Time     `json:"timestamp"`
+	Hostname         string            `json:"hostname"`
+	Duration         time.Duration     `json:"duration"`
+	ConditionResults []ConditionResult `json:"conditionResults"`
+	Errors           []string          `json:"errors"`
+	Success          bool              `json:"success"`
+	Timestamp        time.Time         `json:"timestamp"`
+}
+
+type ConditionResult struct {
+	Condition string `json:"condition"`
+	Success   bool   `json:"success"`
 }
 
 // Summary is the payload served to the dashboard UI.
 type Summary struct {
-	Title          string    `json:"title"`
-	Version        string    `json:"version"`
-	RefreshSeconds int       `json:"refreshSeconds"`
-	Updated        time.Time `json:"updated"`
-	Groups         []Group   `json:"groups"`
+	Title          string     `json:"title"`
+	Version        string     `json:"version"`
+	RefreshSeconds int        `json:"refreshSeconds"`
+	Updated        time.Time  `json:"updated"`
+	Stale          bool       `json:"stale"`
+	Groups         []Group    `json:"groups"`
+	Failures       []Incident `json:"failures"`
+	// FailureRetentionSeconds is how long resolved incidents stay listed.
+	FailureRetentionSeconds int `json:"failureRetentionSeconds"`
 }
 
 type Group struct {
@@ -89,13 +99,17 @@ func Label(name string) string {
 	return label
 }
 
-// BuildGroups converts raw Gatus statuses into sorted groups of pills.
-func BuildGroups(statuses []EndpointStatus) []Group {
+// BuildGroups converts raw Gatus statuses into sorted groups of pills, using at
+// most historySize of the most recent results per endpoint.
+func BuildGroups(statuses []EndpointStatus, historySize int) []Group {
 	byName := map[string][]Pill{}
 	for _, s := range statuses {
 		group := s.Group
 		if group == "" {
 			group = ungroupedName
+		}
+		if n := len(s.Results); n > historySize {
+			s.Results = s.Results[n-historySize:]
 		}
 		byName[group] = append(byName[group], toPill(s))
 	}
