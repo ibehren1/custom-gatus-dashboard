@@ -5,12 +5,12 @@
   --card-border: #262a33;
   --text: #e6e8eb;
   --muted: #8b93a1;
-  --up: #14532d;
-  --up-text: #dcfce7;
-  --flapping: #854d0e;
-  --flapping-text: #fef3c7;
-  --down: #7f1d1d;
-  --down-text: #fee2e2;
+  --up: #0b6e2e;
+  --up-text: #ecfdf0;
+  --flapping: #e6c200;
+  --flapping-text: #1a1600;
+  --down: #a10f0f;
+  --down-text: #fff0f0;
   --unknown: #334155;
   --unknown-text: #cbd5e1;
 }
@@ -147,7 +147,7 @@ main {
   background: var(--flapping);
   color: var(--flapping-text);
   border-style: dashed;
-  border-color: #facc15;
+  border-color: rgba(0, 0, 0, 0.45);
 }
 
 .pill.down {
