@@ -26,7 +26,7 @@ func TestFailureLogGroupsConsecutiveFailures(t *testing.T) {
 	ep.Results = []Result{at(10, false), at(20, false), at(30, false), at(40, true), at(50, false)}
 	log.Observe([]EndpointStatus{ep}, t0.Add(50*time.Second))
 
-	got := log.Snapshot()
+	got := log.Snapshot(nil)
 	if len(got) != 2 {
 		t.Fatalf("got %d incidents, want 2: %+v", len(got), got)
 	}
@@ -53,7 +53,7 @@ func TestFailureLogPrunes(t *testing.T) {
 	}
 	log.Observe([]EndpointStatus{ep, gone}, t0.Add(80*time.Second))
 
-	got := log.Snapshot()
+	got := log.Snapshot(nil)
 	if len(got) != 3 || got[0].Key != "b" {
 		t.Fatalf("want ongoing b plus 2 newest resolved, got %+v", got)
 	}
@@ -63,8 +63,38 @@ func TestFailureLogPrunes(t *testing.T) {
 
 	// Removing b from Gatus drops its incident; aging out drops the rest.
 	log.Observe([]EndpointStatus{ep}, t0.Add(2*time.Hour))
-	if got := log.Snapshot(); len(got) != 0 {
+	if got := log.Snapshot(nil); len(got) != 0 {
 		t.Errorf("want empty log, got %+v", got)
+	}
+}
+
+func TestFailureLogFlappingState(t *testing.T) {
+	log := NewFailureLog(10, time.Hour)
+	flappy := EndpointStatus{Name: "f", Key: "f", Results: []Result{at(0, false), at(10, true), at(20, false), at(30, true)}}
+	down := EndpointStatus{Name: "d", Key: "d", Results: []Result{at(0, false)}}
+	log.Observe([]EndpointStatus{flappy, down}, t0.Add(30*time.Second))
+
+	got := log.Snapshot(map[string]string{"f": StateFlapping, "d": StateDown})
+	want := []struct {
+		key, state string
+	}{{"d", IncidentDown}, {"f", IncidentFlapping}, {"f", IncidentResolved}}
+	if len(got) != len(want) {
+		t.Fatalf("got %d incidents, want %d: %+v", len(got), len(want), got)
+	}
+	for i, w := range want {
+		if got[i].Key != w.key || got[i].State != w.state {
+			t.Errorf("incident %d = %s/%s, want %s/%s", i, got[i].Key, got[i].State, w.key, w.state)
+		}
+	}
+	if !got[1].Resolved.Equal(t0.Add(30 * time.Second)) {
+		t.Errorf("flapping incident should be the latest one: %+v", got[1])
+	}
+
+	// Once the pill is green again, the flap is just a resolved incident.
+	for _, inc := range log.Snapshot(map[string]string{"f": StateUp}) {
+		if inc.Key == "f" && inc.State != IncidentResolved {
+			t.Errorf("want resolved after recovery, got %+v", inc)
+		}
 	}
 }
 

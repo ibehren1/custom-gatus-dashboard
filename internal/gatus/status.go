@@ -49,6 +49,8 @@ type Summary struct {
 	Stale          bool       `json:"stale"`
 	Groups         []Group    `json:"groups"`
 	Failures       []Incident `json:"failures"`
+	// FailureRetentionSeconds is how long resolved incidents stay listed.
+	FailureRetentionSeconds int `json:"failureRetentionSeconds"`
 }
 
 type Group struct {

@@ -6,8 +6,16 @@ import (
 	"time"
 )
 
+// Incident states as shown in the failure list.
+const (
+	IncidentDown     = "down"
+	IncidentFlapping = "flapping"
+	IncidentResolved = "resolved"
+)
+
 // Incident is a run of consecutive failed checks for one endpoint.
 type Incident struct {
+	State    string    `json:"state"`
 	Key      string    `json:"key"`
 	Group    string    `json:"group"`
 	Name     string    `json:"name"`
@@ -24,7 +32,7 @@ func (i Incident) Ongoing() bool { return i.Resolved.IsZero() }
 
 // FailureLog turns the stream of check results into incidents. It keeps all
 // ongoing incidents plus the most recent resolved ones, up to maxResolved and
-// no older than maxAge. FailureLog is not safe for concurrent use.
+// resolved no longer than maxAge ago. FailureLog is not safe for concurrent use.
 type FailureLog struct {
 	maxResolved int
 	maxAge      time.Duration
@@ -120,17 +128,34 @@ func (l *FailureLog) prune(present map[string]bool, now time.Time) {
 	l.incidents = kept
 }
 
-// Snapshot returns ongoing incidents first (most recent failure first), then
-// resolved incidents (most recently resolved first).
-func (l *FailureLog) Snapshot() []Incident {
+// Snapshot returns incidents ordered down, flapping, then resolved. Down
+// incidents are sorted by most recent start, the others by most recent
+// resolution. pillStates maps endpoint key to its current pill state; an
+// endpoint's latest resolved incident is reported as flapping while its pill is.
+func (l *FailureLog) Snapshot(pillStates map[string]string) []Incident {
+	latest := make(map[string]*Incident, len(l.incidents))
+	for _, inc := range l.incidents {
+		latest[inc.Key] = inc
+	}
+
 	out := make([]Incident, len(l.incidents))
 	for i, inc := range l.incidents {
 		out[i] = *inc
+		switch {
+		case inc.Ongoing():
+			out[i].State = IncidentDown
+		case latest[inc.Key] == inc && pillStates[inc.Key] == StateFlapping:
+			out[i].State = IncidentFlapping
+		default:
+			out[i].State = IncidentResolved
+		}
 	}
+
+	rank := map[string]int{IncidentDown: 0, IncidentFlapping: 1, IncidentResolved: 2}
 	sort.SliceStable(out, func(i, j int) bool {
 		a, b := out[i], out[j]
-		if a.Ongoing() != b.Ongoing() {
-			return a.Ongoing()
+		if a.State != b.State {
+			return rank[a.State] < rank[b.State]
 		}
 		if a.Ongoing() {
 			return a.Start.After(b.Start)

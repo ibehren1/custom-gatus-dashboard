@@ -81,5 +81,12 @@ func (p *Poller) Snapshot() (groups []Group, failures []Incident, fetchedAt time
 	if p.statuses == nil {
 		return nil, nil, time.Time{}, false, false
 	}
-	return BuildGroups(p.statuses, p.historySize), p.failures.Snapshot(), p.fetchedAt, p.lastErr != nil, true
+	groups = BuildGroups(p.statuses, p.historySize)
+	pillStates := map[string]string{}
+	for _, g := range groups {
+		for _, pill := range g.Endpoints {
+			pillStates[pill.Key] = pill.State
+		}
+	}
+	return groups, p.failures.Snapshot(pillStates), p.fetchedAt, p.lastErr != nil, true
 }
