@@ -3,7 +3,7 @@
 const STATES = ["up", "flapping", "down", "unknown"];
 const STATE_LABELS = { up: "Up", flapping: "Flapping", down: "Down", unknown: "No data" };
 const MIN_SCALE = 0.3;
-const MAX_SCALE = 2;
+const MAX_SCALE = 1;
 
 let refreshSeconds = 15;
 let timer = null;
