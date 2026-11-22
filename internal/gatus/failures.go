@@ -128,10 +128,9 @@ func (l *FailureLog) prune(present map[string]bool, now time.Time) {
 	l.incidents = kept
 }
 
-// Snapshot returns incidents ordered down, flapping, then resolved. Down
-// incidents are sorted by most recent start, the others by most recent
-// resolution. pillStates maps endpoint key to its current pill state; an
-// endpoint's latest resolved incident is reported as flapping while its pill is.
+// Snapshot returns incidents most recent first, by when they started (still
+// down) or recovered. pillStates maps endpoint key to its current pill state;
+// an endpoint's latest resolved incident is reported as flapping while its pill is.
 func (l *FailureLog) Snapshot(pillStates map[string]string) []Incident {
 	latest := make(map[string]*Incident, len(l.incidents))
 	for _, inc := range l.incidents {
@@ -151,18 +150,18 @@ func (l *FailureLog) Snapshot(pillStates map[string]string) []Incident {
 		}
 	}
 
-	rank := map[string]int{IncidentDown: 0, IncidentFlapping: 1, IncidentResolved: 2}
 	sort.SliceStable(out, func(i, j int) bool {
-		a, b := out[i], out[j]
-		if a.State != b.State {
-			return rank[a.State] < rank[b.State]
-		}
-		if a.Ongoing() {
-			return a.Start.After(b.Start)
-		}
-		return a.Resolved.After(b.Resolved)
+		return out[i].latestEvent().After(out[j].latestEvent())
 	})
 	return out
+}
+
+// latestEvent is when the endpoint went down, or when it recovered if it has.
+func (i Incident) latestEvent() time.Time {
+	if i.Ongoing() {
+		return i.Start
+	}
+	return i.Resolved
 }
 
 // failureReason summarizes why a check failed: errors if any, otherwise the

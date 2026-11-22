@@ -54,11 +54,11 @@ func TestFailureLogPrunes(t *testing.T) {
 	log.Observe([]EndpointStatus{ep, gone}, t0.Add(80*time.Second))
 
 	got := log.Snapshot(nil)
-	if len(got) != 3 || got[0].Key != "b" {
-		t.Fatalf("want ongoing b plus 2 newest resolved, got %+v", got)
+	if len(got) != 3 || got[2].Key != "b" {
+		t.Fatalf("want 2 newest resolved plus ongoing b, got %+v", got)
 	}
-	if !got[1].Resolved.Equal(t0.Add(70*time.Second)) || !got[2].Resolved.Equal(t0.Add(50*time.Second)) {
-		t.Errorf("kept wrong resolved incidents: %+v", got[1:])
+	if !got[0].Resolved.Equal(t0.Add(70*time.Second)) || !got[1].Resolved.Equal(t0.Add(50*time.Second)) {
+		t.Errorf("kept wrong resolved incidents: %+v", got[:2])
 	}
 
 	// Removing b from Gatus drops its incident; aging out drops the rest.
@@ -71,13 +71,14 @@ func TestFailureLogPrunes(t *testing.T) {
 func TestFailureLogFlappingState(t *testing.T) {
 	log := NewFailureLog(10, time.Hour)
 	flappy := EndpointStatus{Name: "f", Key: "f", Results: []Result{at(0, false), at(10, true), at(20, false), at(30, true)}}
-	down := EndpointStatus{Name: "d", Key: "d", Results: []Result{at(0, false)}}
+	down := EndpointStatus{Name: "d", Key: "d", Results: []Result{at(20, false)}}
 	log.Observe([]EndpointStatus{flappy, down}, t0.Add(30*time.Second))
 
+	// Most recent event first: f recovered at 30s, d went down at 20s, f recovered at 10s.
 	got := log.Snapshot(map[string]string{"f": StateFlapping, "d": StateDown})
 	want := []struct {
 		key, state string
-	}{{"d", IncidentDown}, {"f", IncidentFlapping}, {"f", IncidentResolved}}
+	}{{"f", IncidentFlapping}, {"d", IncidentDown}, {"f", IncidentResolved}}
 	if len(got) != len(want) {
 		t.Fatalf("got %d incidents, want %d: %+v", len(got), len(want), got)
 	}
@@ -86,8 +87,8 @@ func TestFailureLogFlappingState(t *testing.T) {
 			t.Errorf("incident %d = %s/%s, want %s/%s", i, got[i].Key, got[i].State, w.key, w.state)
 		}
 	}
-	if !got[1].Resolved.Equal(t0.Add(30 * time.Second)) {
-		t.Errorf("flapping incident should be the latest one: %+v", got[1])
+	if !got[0].Resolved.Equal(t0.Add(30 * time.Second)) {
+		t.Errorf("flapping incident should be the latest one: %+v", got[0])
 	}
 
 	// Once the pill is green again, the flap is just a resolved incident.

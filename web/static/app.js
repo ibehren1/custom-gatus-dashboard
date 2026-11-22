@@ -112,11 +112,11 @@ function failureRow(f) {
   const end = ongoing ? Date.now() : new Date(f.resolved).getTime();
   const span = formatDuration(end - new Date(f.start).getTime());
   const checks = `${f.count} failed check${f.count === 1 ? "" : "s"}`;
-  const duration = ongoing ? `down ${span}, ${checks}` : `down ${span}, ${checks}, recovered ${formatTime(f.resolved)}`;
+  const duration = ongoing ? `down ${span}, ${checks}` : `recovered after ${span}, ${checks}`;
 
   row.append(
     el("span", "badge", INCIDENT_LABELS[f.state]),
-    el("span", "time", formatTime(f.start)),
+    el("span", "time", formatTime(ongoing ? f.start : f.resolved)),
     el("span", "failure-group", f.group || "Ungrouped"),
     el("span", "label", f.label),
     el("span", "duration", duration)

@@ -37,7 +37,7 @@ services:
       - GATUS_URL=http://gatus:8080
       - REFRESH_SECONDS=10
       - HISTORY_SIZE=10
-      - FAILURE_RETENTION=24h
+      - FAILURE_RETENTION=5m
       - GATUS_THEME=dark
     ports:
       - "8083:8080"

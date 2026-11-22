@@ -35,7 +35,8 @@ tagged to match the pill colors:
 - **Flapping** (yellow): the endpoint recovered but its pill is still yellow.
 - **Resolved** (green): the endpoint has been healthy since.
 
-Down incidents are listed first, then flapping, then resolved, most recent first.
+Incidents are sorted most recent first, by when the endpoint went down or, if it
+has recovered, when it recovered. The time column shows that same time.
 Resolved and flapping incidents clear from the list `FAILURE_RETENTION` after they
 recovered. When the list is taller than the panel it scrolls upward continuously;
 hover to pause.
