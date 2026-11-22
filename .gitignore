@@ -1,0 +1,7 @@
+# Local test environment (never commit)
+docker-compose.yml
+config/
+data/
+
+# Build output
+bin/

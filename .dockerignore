@@ -1,0 +1,6 @@
+.git
+.github
+config/
+data/
+docker-compose*.yml
+bin/

@@ -1,0 +1,51 @@
+# Example: run custom-gatus-dashboard as a sidecar next to Gatus and Postgres.
+# Replace the placeholder credentials before use.
+services:
+
+  gatus:
+    image: twinproduction/gatus:latest
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      - POSTGRES_USER=username
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=gatus
+    volumes:
+      - ./config:/config
+    networks:
+      - gatus-network
+
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=gatus
+      - POSTGRES_USER=username
+      - POSTGRES_PASSWORD=password
+    networks:
+      - gatus-network
+
+  dashboard:
+    image: ghcr.io/ibehren1/custom-gatus-dashboard:latest
+    restart: unless-stopped
+    depends_on:
+      - gatus
+    environment:
+      - GATUS_URL=http://gatus:8080
+      - REFRESH_SECONDS=15
+      - HISTORY_SIZE=10
+    ports:
+      - "8083:8080"
+    networks:
+      - gatus-network
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+networks:
+  gatus-network:
