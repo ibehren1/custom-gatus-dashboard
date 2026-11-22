@@ -26,11 +26,19 @@ Pill labels use the part of the endpoint name before the first ` - `
 
 ## Recent failures
 
-A panel across the bottom lists failure incidents from the last 24 hours. Consecutive
-failed checks for an endpoint are grouped into one incident showing when it started,
-how long it lasted, how many checks failed, and why (errors or failed conditions).
-Ongoing incidents are listed first, then resolved ones, most recent first. When the
-list is taller than the panel it scrolls upward continuously; hover to pause.
+A panel across the bottom lists failure incidents. Consecutive failed checks for an
+endpoint are grouped into one incident showing when it started, how long it lasted,
+how many checks failed, and why (errors or failed conditions). Each incident is
+tagged to match the pill colors:
+
+- **Down** (red): the endpoint is still failing.
+- **Flapping** (yellow): the endpoint recovered but its pill is still yellow.
+- **Resolved** (green): the endpoint has been healthy since.
+
+Down incidents are listed first, then flapping, then resolved, most recent first.
+Resolved and flapping incidents clear from the list `FAILURE_RETENTION` after they
+recovered. When the list is taller than the panel it scrolls upward continuously;
+hover to pause.
 
 The dashboard polls Gatus in the background and keeps the incident log in memory.
 On startup it backfills from the last 100 results Gatus has for each endpoint.
@@ -45,6 +53,9 @@ On startup it backfills from the last 100 results Gatus has for each endpoint.
 | `/dash/healthz`      | Health check                                 |
 | everything else      | Reverse-proxied to Gatus (detail pages, API) |
 
+Loading the dashboard sets the Gatus `theme` cookie, so endpoint detail pages
+opened from a pill or failure row use the same dark theme.
+
 ## Configuration
 
 | Variable          | Default             | Description                                         |
@@ -55,6 +66,8 @@ On startup it backfills from the last 100 results Gatus has for each endpoint.
 | `POLL_SECONDS`    | `10`                | How often the dashboard polls Gatus                 |
 | `HISTORY_SIZE`    | `10`                | Number of recent results used for flap detection    |
 | `FAILURE_LOG_SIZE`| `100`               | Maximum resolved incidents kept in the failure log  |
+| `FAILURE_RETENTION`| `24h`              | How long recovered incidents stay listed (Go duration, e.g. `30m`, `2h`) |
+| `GATUS_THEME`     | `dark`              | Gatus UI theme set when the dashboard loads (`dark`, `light`, or `none` to leave it alone) |
 | `TITLE`           | Gatus `ui.title`    | Page title; defaults to the title configured in Gatus |
 
 ## Deploy

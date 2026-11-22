@@ -233,7 +233,7 @@ main {
   text-transform: uppercase;
 }
 
-.failure.ongoing .badge {
+.failure.down .badge {
   background: var(--down);
   color: var(--down-text);
 }
@@ -245,6 +245,11 @@ main {
 .failure.resolved .badge {
   background: var(--up);
   color: var(--up-text);
+}
+
+.failure.flapping .badge {
+  background: var(--flapping);
+  color: var(--flapping-text);
 }
 
 .failure .time,

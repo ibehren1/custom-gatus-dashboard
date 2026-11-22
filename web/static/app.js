@@ -5,8 +5,10 @@ const STATE_LABELS = { up: "Up", flapping: "Flapping", down: "Down", unknown: "N
 const MIN_SCALE = 0.3;
 const MAX_SCALE = 1;
 const TICKER_SPEED = 20; // pixels per second
+const INCIDENT_LABELS = { down: "Down", flapping: "Flapping", resolved: "Resolved" };
 
 let refreshSeconds = 15;
+let retentionText = "24h";
 let timer = null;
 
 function el(tag, className, text) {
@@ -89,8 +91,9 @@ function formatDuration(ms) {
   const m = Math.floor(s / 60);
   if (m < 60) return `${m}m`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ${m % 60}m`;
-  return `${Math.floor(h / 24)}d ${h % 24}h`;
+  if (h < 24) return m % 60 ? `${h}h ${m % 60}m` : `${h}h`;
+  const d = Math.floor(h / 24);
+  return h % 24 ? `${d}d ${h % 24}h` : `${d}d`;
 }
 
 function formatTime(iso) {
@@ -101,18 +104,18 @@ function formatTime(iso) {
 }
 
 function failureRow(f) {
-  const ongoing = !f.resolved;
-  const row = el("a", `failure ${ongoing ? "ongoing" : "resolved"}`);
+  const ongoing = f.state === "down";
+  const row = el("a", `failure ${f.state}`);
   row.href = `/endpoints/${encodeURI(f.key)}`;
   row.title = `${f.name}\n${f.reason}`;
 
   const end = ongoing ? Date.now() : new Date(f.resolved).getTime();
   const span = formatDuration(end - new Date(f.start).getTime());
   const checks = `${f.count} failed check${f.count === 1 ? "" : "s"}`;
-  const duration = ongoing ? `down ${span}, ${checks}` : `down ${span}, ${checks}, resolved ${formatTime(f.resolved)}`;
+  const duration = ongoing ? `down ${span}, ${checks}` : `down ${span}, ${checks}, recovered ${formatTime(f.resolved)}`;
 
   row.append(
-    el("span", "badge", ongoing ? "Down" : "Resolved"),
+    el("span", "badge", INCIDENT_LABELS[f.state]),
     el("span", "time", formatTime(f.start)),
     el("span", "failure-group", f.group || "Ungrouped"),
     el("span", "label", f.label),
@@ -135,9 +138,13 @@ const ticker = {
 
 function renderFailures(failures) {
   ticker.failures = failures;
-  const ongoing = failures.filter((f) => !f.resolved).length;
-  document.getElementById("failure-count").textContent = failures.length
-    ? `${ongoing} ongoing, ${failures.length - ongoing} resolved (24h)`
+  const counts = { down: 0, flapping: 0, resolved: 0 };
+  for (const f of failures) counts[f.state]++;
+  const parts = Object.entries(counts)
+    .filter(([, n]) => n > 0)
+    .map(([state, n]) => `${n} ${INCIDENT_LABELS[state].toLowerCase()}`);
+  document.getElementById("failure-count").textContent = parts.length
+    ? `${parts.join(", ")} · resolved entries clear after ${retentionText}`
     : "";
   layoutTicker();
 }
@@ -149,7 +156,7 @@ function layoutTicker() {
   ticker.loopHeight = 0;
 
   if (!ticker.failures.length) {
-    track.append(el("div", "ticker-empty", "No failures in the last 24 hours."));
+    track.append(el("div", "ticker-empty", `No failures in the last ${retentionText}.`));
     return;
   }
 
@@ -198,6 +205,7 @@ async function refresh() {
     renderCounts(data.groups);
     renderGroups(data.groups);
     fitToScreen();
+    if (data.failureRetentionSeconds) retentionText = formatDuration(data.failureRetentionSeconds * 1000);
     renderFailures(data.failures || []);
 
     if (data.refreshSeconds && data.refreshSeconds !== refreshSeconds) {
