@@ -5,12 +5,12 @@
   --card-border: #2a2e34;
   --text: #e6e8eb;
   --muted: #8d94a0;
-  --up: #0b6e2e;
-  --up-text: #ecfdf0;
-  --flapping: #e6c200;
-  --flapping-text: #1a1600;
-  --down: #a10f0f;
-  --down-text: #fff0f0;
+  --up: #006b2b;
+  --up-text: #ffffff;
+  --flapping: #f5b800;
+  --flapping-text: #111111;
+  --down: #b00000;
+  --down-text: #ffffff;
   --unknown: #434852;
   --unknown-text: #e6e8eb;
 }

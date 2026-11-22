@@ -105,12 +105,6 @@ go test ./...
 docker build -t custom-gatus-dashboard .
 ```
 
-## Versioning
-
-The version lives in [`VERSION`](VERSION) and is baked into the binary at build time
-(shown in the dashboard footer). It starts at `0.0.0`. Every commit increments the
-patch number (`z` in `x.y.z`); only the maintainer changes `x.y`.
-
 ## Releases
 
 Every push to `main` runs tests, builds a multi-arch (amd64, arm64) image, and
