@@ -38,7 +38,7 @@ header {
   display: flex;
   align-items: baseline;
   gap: 1rem;
-  margin-bottom: calc(var(--scale) * 0.5rem);
+  margin-bottom: calc(var(--scale) * 0.35rem);
 }
 
 h1 {
@@ -67,6 +67,28 @@ h1 {
   margin-left: auto;
   color: var(--muted);
   font-size: calc(var(--scale) * 0.8rem);
+}
+
+#countdown {
+  display: inline-block;
+  min-width: 6.5em;
+  font-variant-numeric: tabular-nums;
+}
+
+.refresh-bar {
+  flex: none;
+  height: 3px;
+  margin-bottom: calc(var(--scale) * 0.5rem);
+  border-radius: 2px;
+  background: var(--card-border);
+  overflow: hidden;
+}
+
+.refresh-progress {
+  height: 100%;
+  background: #3b82f6;
+  transform-origin: left;
+  transform: scaleX(0);
 }
 
 .stale {

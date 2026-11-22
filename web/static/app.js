@@ -10,6 +10,8 @@ const INCIDENT_LABELS = { down: "Down", flapping: "Flapping", resolved: "Resolve
 let refreshSeconds = 15;
 let retentionText = "24h";
 let timer = null;
+let nextRefreshAt = 0;
+let countdownSeconds = null;
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -184,10 +186,27 @@ function tickerFrame(ts) {
     ticker.offset = (ticker.offset + TICKER_SPEED * dt) % ticker.loopHeight;
     moveTicker();
   }
+  updateCountdown();
   requestAnimationFrame(tickerFrame);
 }
 
+// Drain the refresh bar and count down the seconds until the next refresh.
+function updateCountdown() {
+  const remaining = Math.max(0, nextRefreshAt - Date.now());
+  const fraction = nextRefreshAt ? remaining / (refreshSeconds * 1000) : 0;
+  document.getElementById("refresh-progress").style.transform = `scaleX(${fraction})`;
+
+  const seconds = Math.ceil(remaining / 1000);
+  if (seconds !== countdownSeconds) {
+    countdownSeconds = seconds;
+    document.getElementById("countdown").textContent = nextRefreshAt
+      ? seconds > 0 ? `refresh in ${seconds}s` : "refreshing…"
+      : "";
+  }
+}
+
 async function refresh() {
+  nextRefreshAt = 0;
   try {
     const resp = await fetch("/dash/api/summary", { cache: "no-store" });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -208,19 +227,18 @@ async function refresh() {
     if (data.failureRetentionSeconds) retentionText = formatDuration(data.failureRetentionSeconds * 1000);
     renderFailures(data.failures || []);
 
-    if (data.refreshSeconds && data.refreshSeconds !== refreshSeconds) {
-      refreshSeconds = data.refreshSeconds;
-      schedule();
-    }
+    if (data.refreshSeconds) refreshSeconds = data.refreshSeconds;
   } catch (err) {
     console.error("refresh failed", err);
     document.getElementById("stale").hidden = false;
   }
+  scheduleNext();
 }
 
-function schedule() {
-  clearInterval(timer);
-  timer = setInterval(refresh, refreshSeconds * 1000);
+function scheduleNext() {
+  clearTimeout(timer);
+  nextRefreshAt = Date.now() + refreshSeconds * 1000;
+  timer = setTimeout(refresh, refreshSeconds * 1000);
 }
 
 let resizeTimer = null;
@@ -238,4 +256,3 @@ ticker.node.addEventListener("mouseleave", () => (ticker.paused = false));
 requestAnimationFrame(tickerFrame);
 
 refresh();
-schedule();

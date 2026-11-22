@@ -18,7 +18,8 @@ and the Gatus detail pages share one origin.
 | Red    | Down     | Latest check failed (also bold with an outline)           |
 | Gray   | No data  | No results recorded yet                                   |
 
-"Recent" means the last `HISTORY_SIZE` results. Hover a pill for the full name,
+A thin bar under the header drains until the next refresh, next to a seconds
+countdown. "Recent" means the last `HISTORY_SIZE` results. Hover a pill for the full name,
 last response time, last check time, recent history, and errors.
 
 Pill labels use the part of the endpoint name before the first ` - `
